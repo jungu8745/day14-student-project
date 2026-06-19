@@ -208,13 +208,33 @@ app.patch("/students/:id", async function (request, response, next) {
 
 app.delete("/students/:id", async function (request, response, next) {
   try {
-    // TODO:
-    // 1. id를 검사합니다.
-    // 2. 삭제할 학생이 있는지 먼저 조회합니다.
-    // 3. 학생이 없으면 404로 응답합니다.
-    // 4. DELETE로 삭제합니다.
-    // 5. 삭제 메시지와 삭제된 학생 객체를 응답합니다.
-    sendTodo(response, "DELETE /students/:id");
+    const id = isIntegerId(request.params.id);
+
+    if (id === null) {
+      response.status(400).json({
+        message: "올바른 학생 ID가 아닙니다.",
+      });
+      return;
+    }
+
+    const student = await findStudentById(id);
+
+    if (!student) {
+      response.status(404).json({
+        message: "학생을 찾을 수 없습니다.",
+      });
+      return;
+    }
+
+    await pool.query(
+      "DELETE FROM students WHERE id = ?",
+      [id]
+    );
+
+    response.json({
+      message: "학생이 삭제되었습니다.",
+      student: student,
+    });
   } catch (error) {
     next(error);
   }
