@@ -131,13 +131,25 @@ app.post("/students", async function (request, response, next) {
 
 app.get("/students/:id", async function (request, response, next) {
   try {
-    // TODO:
-    // 1. request.params.id를 정수로 바꿉니다.
-    // 2. 정수가 아니면 400으로 응답합니다.
-    // 3. findStudentById(id)로 학생을 조회합니다.
-    // 4. 학생이 없으면 404로 응답합니다.
-    // 5. 학생 객체를 응답합니다.
-    sendTodo(response, "GET /students/:id");
+    const id = isIntegerId(request.params.id);
+
+    if (id === null) {
+      response.status(400).json({
+        message: "올바른 학생 ID가 아닙니다.",
+      });
+      return;
+    }
+
+    const student = await findStudentById(id);
+
+    if (!student) {
+      response.status(404).json({
+        message: "학생을 찾을 수 없습니다.",
+      });
+      return;
+    }
+
+    response.json(student);
   } catch (error) {
     next(error);
   }
