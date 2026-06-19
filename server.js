@@ -88,13 +88,29 @@ app.get("/health", function (request, response) {
 
 app.get("/students/search", async function (request, response, next) {
   try {
-    // TODO:
-    // 1. request.query.minScore, request.query.maxScore를 읽습니다.
-    // 2. 숫자인지 검사합니다.
-    // 3. minScore가 maxScore보다 크면 400으로 응답합니다.
-    // 4. 조건에 맞는 학생을 SELECT로 조회합니다.
-    // 5. rows를 response.json(rows)로 응답합니다.
-    sendTodo(response, "GET /students/search");
+    const minScore = Number(request.query.minScore);
+    const maxScore = Number(request.query.maxScore);
+
+    if (!Number.isInteger(minScore) || !Number.isInteger(maxScore)) {
+      response.status(400).json({
+        message: "점수 범위가 올바르지 않습니다.",
+      });
+      return;
+    }
+
+    if (minScore > maxScore) {
+      response.status(400).json({
+        message: "최소 점수는 최대 점수보다 클 수 없습니다.",
+      });
+      return;
+    }
+
+    const [rows] = await pool.query(
+      "SELECT id, name, score FROM students WHERE score BETWEEN ? AND ? ORDER BY id ASC",
+      [minScore, maxScore]
+    );
+
+    response.json(rows);
   } catch (error) {
     next(error);
   }
